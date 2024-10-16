@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% include "static/head.html" %}
+   
+    <body class="hold-transition sidebar-mini layout-fixed">
+        <div class="wrapper">
+
+        <!-- Preloader -->
+        <div class="preloader flex-column justify-content-center align-items-center">
+            <img class="animation__shake" src="{{ url_for('static',filename='dist/img/AdminLTELogo.png') }}" alt="AdminLTELogo" height="60" width="60">
+        </div>
+
+        {% include "static/nav.html" %}
+
+        {% include "static/sidebar.html" %}
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper">
+            {% block content %}
+            {% endblock %}
+        </div>
+        <!-- /.content-wrapper -->
+
+        {% include "static/footer.html" %}
+        
+        <!-- Control Sidebar -->
+        <aside class="control-sidebar control-sidebar-dark">
+            <!-- Control sidebar content goes here -->
+        </aside>
+        <!-- /.control-sidebar -->
+        </div>
+        <!-- ./wrapper -->
+
+        {% include "static/scripts.html" %}
+
+    <script>
+        setTimeout(function() {
+            const messages = document.querySelectorAll('.messages li');
+            messages.forEach(function(message) {
+                message.style.display = 'none';
+            });
+        }, 10000);
+    </script>
+
+    </body>
+</html>
