@@ -1,0 +1,183 @@
+{% extends "static/base.html" %}
+
+{% block content %}
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Manage Transactions</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+                        <li class="breadcrumb-item active">Transactions</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-sm-12">
+                    <!-- Create Transaction Button -->
+                    <a href="{{ url_for('create_transaction') }}" class="btn btn-success float-right">
+                        <i class="fas fa-plus"></i> Create Transaction
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <table id="example1" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Order</th>
+                                    <th>Transaction Type</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.id }}</td>
+                                    <td>{{ transaction.user.full_name }}</td>
+                                    <td>Order #{{ transaction.order.id }}</td>
+                                    <td>{{ transaction.transaction_type }}</td>
+                                    <td>{{ transaction.quantity }}</td>
+                                    <td>{{ transaction.price }}</td>
+                                    <td>{{ transaction.total }}</td>
+                                    <td>
+                                        <!-- View Transaction Modal Trigger -->
+                                        <a href="#" class="btn btn-info btn-sm" title="View" data-toggle="modal" data-target="#viewModal{{ transaction.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+
+                                        <!-- Edit Transaction Modal Trigger -->
+                                        <a href="#" class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#editModal{{ transaction.id }}">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </a>
+
+                                        <!-- Delete Action -->
+                                        <a href="{{ url_for('delete_transaction', id=transaction.id) }}" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this transaction?');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+
+                                <!-- View Transaction Modal -->
+                                <div class="modal fade" id="viewModal{{ transaction.id }}" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel{{ transaction.id }}" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="viewModalLabel{{ transaction.id }}">View Transaction</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>ID:</strong> {{ transaction.id }}</p>
+                                                <p><strong>User:</strong> {{ transaction.user.full_name }}</p>
+                                                <p><strong>Order:</strong> Order #{{ transaction.order.id }}</p>
+                                                <p><strong>Transaction Type:</strong> {{ transaction.transaction_type }}</p>
+                                                <p><strong>Quantity:</strong> {{ transaction.quantity }}</p>
+                                                <p><strong>Price:</strong> {{ transaction.price }}</p>
+                                                <p><strong>Total:</strong> {{ transaction.total }}</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Edit Transaction Modal -->
+                                <div class="modal fade" id="editModal{{ transaction.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ transaction.id }}" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="editModalLabel{{ transaction.id }}">Edit Transaction</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <form action="{{ url_for('edit_transaction', id=transaction.id) }}" method="POST">
+                                                <div class="modal-body">
+                                                    <!-- User Dropdown -->
+                                                    <div class="form-group">
+                                                        <label for="user_id{{ transaction.id }}">User</label>
+                                                        <select class="form-control" id="user_id{{ transaction.id }}" name="user_id">
+                                                            {% for user in users %}
+                                                                <option value="{{ user.id }}" {% if transaction.user.id == user.id %}selected{% endif %}>{{ user.full_name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Order Dropdown -->
+                                                    <div class="form-group">
+                                                        <label for="order_id{{ transaction.id }}">Order</label>
+                                                        <select class="form-control" id="order_id{{ transaction.id }}" name="order_id">
+                                                            {% for order in orders %}
+                                                                <option value="{{ order.id }}" {% if transaction.order.id == order.id %}selected{% endif %}>Order #{{ order.id }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Transaction Type -->
+                                                    <div class="form-group">
+                                                        <label for="transaction_type{{ transaction.id }}">Transaction Type</label>
+                                                        <select class="form-control" id="transaction_type{{ transaction.id }}" name="transaction_type">
+                                                            <option value="buy" {% if transaction.transaction_type == 'buy' %}selected{% endif %}>Buy</option>
+                                                            <option value="sell" {% if transaction.transaction_type == 'sell' %}selected{% endif %}>Sell</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Quantity -->
+                                                    <div class="form-group">
+                                                        <label for="quantity{{ transaction.id }}">Quantity</label>
+                                                        <input type="number" class="form-control" id="quantity{{ transaction.id }}" name="quantity" value="{{ transaction.quantity }}">
+                                                    </div>
+
+                                                    <!-- Price -->
+                                                    <div class="form-group">
+                                                        <label for="price{{ transaction.id }}">Price</label>
+                                                        <input type="number" step="0.01" class="form-control" id="price{{ transaction.id }}" name="price" value="{{ transaction.price }}">
+                                                    </div>
+
+                                                    <!-- Total -->
+                                                    <div class="form-group">
+                                                        <label for="total{{ transaction.id }}">Total</label>
+                                                        <input type="number" step="0.01" class="form-control" id="total{{ transaction.id }}" name="total" value="{{ transaction.total }}">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Include Bootstrap JS and jQuery for modals to work -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

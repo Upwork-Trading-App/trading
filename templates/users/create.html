@@ -6,12 +6,12 @@
         <div class="container-fluid">
           <div class="row mb-2">
             <div class="col-sm-6">
-              <h1 class="m-0">Create Cash Transaction</h1>
+              <h1 class="m-0">Create User</h1>
             </div><!-- /.col -->
             <div class="col-sm-6">
               <ol class="breadcrumb float-sm-right">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
-                <li class="breadcrumb-item active">Cash Transactions</li>
+                <li class="breadcrumb-item active">Users</li>
               </ol>
             </div><!-- /.col -->
           </div><!-- /.row -->
@@ -27,44 +27,52 @@
             <!-- general form elements -->
             <div class="card card-primary">
               <div class="card-header">
-                <h3 class="card-title">Create Cash Transaction</h3>
+                <h3 class="card-title">Create User</h3>
               </div>
               <!-- /.card-header -->
 
               <!-- form start -->
-              <form action="{{ url_for('create_cash_transaction') }}" method="POST">
+              <form action="{{ url_for('create_user') }}" method="POST">
                 <div class="card-body">
                   
-                  <!-- User Dropdown -->
+                  <!-- Full Name -->
                   <div class="form-group">
-                    <label for="user_id">User</label>
-                    <select class="form-control" id="user_id" name="user_id" required>
-                      {% for user in users %}
-                        <option value="{{ user.id }}">{{ user.full_name }}</option>
-                      {% endfor %}
-                    </select>
+                    <label for="full_name">Full Name</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" placeholder="Enter full name" required>
                   </div>
 
-                  <!-- Transaction Type Dropdown -->
+                  <!-- Username -->
                   <div class="form-group">
-                    <label for="transaction_type">Transaction Type</label>
-                    <select class="form-control" id="transaction_type" name="transaction_type" required>
-                      <option value="deposit">Deposit</option>
-                      <option value="withdrawal">Withdrawal</option>
-                    </select>
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
                   </div>
 
-                  <!-- Amount -->
+                  <!-- Email -->
                   <div class="form-group">
-                    <label for="amount">Amount</label>
-                    <input type="number" step="0.01" class="form-control" id="amount" name="amount" placeholder="Enter amount" required>
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
+                  </div>
+
+                  <!-- Password -->
+                  <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                  </div>
+
+                  <!-- Role Dropdown -->
+                  <div class="form-group">
+                    <label for="role">Role</label>
+                    <select class="form-control" id="role" name="role" required>
+                      <option value="customer">Customer</option>
+                      <option value="admin">Admin</option>
+                    </select>
                   </div>
 
                 </div>
                 <!-- /.card-body -->
 
                 <div class="card-footer">
-                  <a href="{{ url_for('list_cash_transactions') }}" class="btn btn-secondary">Back</a>
+                  <a href="{{ url_for('list_users') }}" class="btn btn-secondary">Back</a>
                   <button type="submit" class="btn btn-primary float-right">Submit</button>
                 </div>
               </form>

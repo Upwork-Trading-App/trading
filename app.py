@@ -90,6 +90,30 @@ def logout():
 
 
 ### USERS
+@app.route('/users/create', methods=['GET', 'POST'])
+def create_user():
+    if request.method == 'POST':
+        full_name = request.form['full_name']
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form['role']
+        
+        # Check if the username or email already exists
+        user_exists = Users.query.filter((Users.username == username) | (Users.email == email)).first()
+        if user_exists:
+            return redirect(url_for('create_user'))
+        
+        # Create a new user
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_user = Users(full_name=full_name, username=username, email=email, password_hash=hashed_password, role=role)
+        db.session.add(new_user)
+        db.session.commit()
+        
+        return redirect(url_for('list_users'))
+    
+    return render_template('users/create.html')
+
 @app.route('/users', methods=['GET'])
 def list_users():
     if 'loggedin' in session:
@@ -179,6 +203,9 @@ def delete_portfolio(id):
 ### PORTFOLIO STOCK
 @app.route('/portfolio_stock/create', methods=['GET', 'POST'])
 def create_portfolio_stock():
+    portfolios = Portfolio.query.all()
+    stocks = Stock.query.all()
+
     if request.method == 'POST':
         portfolio_id = request.form['portfolio_id']
         stock_id = request.form['stock_id']
@@ -191,25 +218,35 @@ def create_portfolio_stock():
 
         return redirect(url_for('list_portfolio_stocks'))
 
-    return render_template('portfolio_stock/create.html')
+    return render_template('portfolio_stock/create.html', portfolios=portfolios, stocks=stocks)
 
 @app.route('/portfolio_stocks')
 def list_portfolio_stocks():
     portfolio_stocks = PortfolioStock.query.all()
     return render_template('portfolio_stock/list.html', portfolio_stocks=portfolio_stocks)
 
-@app.route('/portfolio_stock/edit/<int:id>', methods=['GET', 'POST'])
+@app.route('/portfolio_stocks/edit/<int:id>', methods=['GET', 'POST'])
 def edit_portfolio_stock(id):
     portfolio_stock = PortfolioStock.query.get_or_404(id)
-    
+    portfolios = Portfolio.query.all()
+    stocks = Stock.query.all() 
+
     if request.method == 'POST':
-        portfolio_stock.quantity = int(request.form['quantity'])
-        portfolio_stock.average_price = float(request.form['average_price'])
+        portfolio_id = request.form['portfolio_id']
+        stock_id = request.form['stock_id']
+        quantity = int(request.form['quantity'])
+        average_price = float(request.form['average_price'])
+
+        portfolio_stock.portfolio_id = portfolio_id
+        portfolio_stock.stock_id = stock_id
+        portfolio_stock.quantity = quantity
+        portfolio_stock.average_price = average_price
+
         db.session.commit()
 
         return redirect(url_for('list_portfolio_stocks'))
 
-    return render_template('portfolio_stock/edit.html', portfolio_stock=portfolio_stock)
+    return render_template('portfolio_stock/edit.html', portfolio_stock=portfolio_stock, portfolios=portfolios, stocks=stocks)
 
 @app.route('/portfolio_stock/delete/<int:id>')
 def delete_portfolio_stock(id):
@@ -273,13 +310,16 @@ def delete_stock(id):
 ### ORDER
 @app.route('/order/create', methods=['GET', 'POST'])
 def create_order():
+    users = Users.query.all() 
+    stocks = Stock.query.all() 
+
     if request.method == 'POST':
         user_id = request.form['user_id']
         stock_id = request.form['stock_id']
         order_type = request.form['order_type']
         quantity = int(request.form['quantity'])
         price = float(request.form['price'])
-        status = 'pending'  # Orders are created as pending initially
+        status = 'pending'  
 
         order = Order(user_id=user_id, stock_id=stock_id, order_type=order_type, quantity=quantity, price=price, status=status)
         db.session.add(order)
@@ -287,7 +327,7 @@ def create_order():
 
         return redirect(url_for('list_orders'))
 
-    return render_template('order/create.html')
+    return render_template('order/create.html', users=users, stocks=stocks)
 
 @app.route('/orders')
 def list_orders():
@@ -297,8 +337,12 @@ def list_orders():
 @app.route('/order/edit/<int:id>', methods=['GET', 'POST'])
 def edit_order(id):
     order = Order.query.get_or_404(id)
+    users = Users.query.all() 
+    stocks = Stock.query.all() 
     
     if request.method == 'POST':
+        order.user_id = request.form['user_id']  
+        order.stock_id = request.form['stock_id']  
         order.quantity = int(request.form['quantity'])
         order.price = float(request.form['price'])
         order.status = request.form['status']
@@ -306,7 +350,7 @@ def edit_order(id):
 
         return redirect(url_for('list_orders'))
 
-    return render_template('order/edit.html', order=order)
+    return render_template('order/edit.html', order=order, users=users, stocks=stocks)
 
 @app.route('/order/delete/<int:id>')
 def delete_order(id):
@@ -320,6 +364,9 @@ def delete_order(id):
 ### TRANSACTION
 @app.route('/transaction/create', methods=['GET', 'POST'])
 def create_transaction():
+    users = Users.query.all()  # Fetch all users for the dropdown
+    orders = Order.query.all()  # Fetch all orders for the dropdown
+    
     if request.method == 'POST':
         user_id = request.form['user_id']
         order_id = request.form['order_id']
@@ -334,18 +381,24 @@ def create_transaction():
 
         return redirect(url_for('list_transactions'))
 
-    return render_template('transaction/create.html')
+    return render_template('transaction/create.html', users=users, orders=orders)  # Pass users and orders to template
+
 
 @app.route('/transactions')
 def list_transactions():
     transactions = Transaction.query.all()
     return render_template('transaction/list.html', transactions=transactions)
 
+
 @app.route('/transaction/edit/<int:id>', methods=['GET', 'POST'])
 def edit_transaction(id):
     transaction = Transaction.query.get_or_404(id)
+    users = Users.query.all()  # Fetch all users for the dropdown
+    orders = Order.query.all()  # Fetch all orders for the dropdown
     
     if request.method == 'POST':
+        transaction.user_id = request.form['user_id']  # Update user ID from dropdown
+        transaction.order_id = request.form['order_id']  # Update order ID from dropdown
         transaction.quantity = int(request.form['quantity'])
         transaction.price = float(request.form['price'])
         transaction.total = transaction.quantity * transaction.price
@@ -353,7 +406,8 @@ def edit_transaction(id):
 
         return redirect(url_for('list_transactions'))
 
-    return render_template('transaction/edit.html', transaction=transaction)
+    return render_template('transaction/edit.html', transaction=transaction, users=users, orders=orders)  # Pass users and orders to template
+
 
 @app.route('/transaction/delete/<int:id>')
 def delete_transaction(id):
@@ -364,9 +418,11 @@ def delete_transaction(id):
     return redirect(url_for('list_transactions'))
 
 
+
 ### CASH TRANSACTION
 @app.route('/cash_transaction/create', methods=['GET', 'POST'])
 def create_cash_transaction():
+    users = Users.query.all()  # Fetch all users to populate the dropdown
     if request.method == 'POST':
         user_id = request.form['user_id']
         transaction_type = request.form['transaction_type']
@@ -378,24 +434,30 @@ def create_cash_transaction():
 
         return redirect(url_for('list_cash_transactions'))
 
-    return render_template('cash_transaction/create.html')
+    return render_template('cash_transaction/create.html', users=users)  # Pass users to the template for dropdown
+
 
 @app.route('/cash_transactions')
 def list_cash_transactions():
     cash_transactions = CashTransaction.query.all()
     return render_template('cash_transaction/list.html', cash_transactions=cash_transactions)
 
+
 @app.route('/cash_transaction/edit/<int:id>', methods=['GET', 'POST'])
 def edit_cash_transaction(id):
     cash_transaction = CashTransaction.query.get_or_404(id)
+    users = Users.query.all()  # Fetch all users to populate the dropdown
     
     if request.method == 'POST':
+        cash_transaction.user_id = request.form['user_id']  # Update user selection
         cash_transaction.amount = float(request.form['amount'])
+        cash_transaction.transaction_type = request.form['transaction_type']  # Update transaction type
         db.session.commit()
 
         return redirect(url_for('list_cash_transactions'))
 
-    return render_template('cash_transaction/edit.html', cash_transaction=cash_transaction)
+    return render_template('cash_transaction/edit.html', cash_transaction=cash_transaction, users=users)  # Pass users and transaction to template
+
 
 @app.route('/cash_transaction/delete/<int:id>')
 def delete_cash_transaction(id):
@@ -404,6 +466,7 @@ def delete_cash_transaction(id):
     db.session.commit()
     
     return redirect(url_for('list_cash_transactions'))
+
 
 
 
