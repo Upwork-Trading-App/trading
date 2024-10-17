@@ -11,7 +11,7 @@ class Users(db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(50), nullable=False)  # 'customer' or 'admin'
+    role = db.Column(db.String(50), nullable=False)  # 'trader' or 'admin'
     
     portfolio = db.relationship('Portfolio', backref='user', lazy=True)
     
@@ -28,7 +28,7 @@ class Portfolio(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     cash_balance = db.Column(db.Float, default=0.0)
     total_value = db.Column(db.Float, default=0.0)
-    stocks = db.relationship('PortfolioStock', backref='portfolio', lazy=True)
+    stocks = db.relationship('PortfolioStock', backref='portfolio_owner', lazy=True)
 
 # PortfolioStock Model
 class PortfolioStock(db.Model):
@@ -38,6 +38,10 @@ class PortfolioStock(db.Model):
     stock_id = db.Column(db.Integer, db.ForeignKey('stocks.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     average_price = db.Column(db.Float, nullable=False)
+
+    # Define relationships to Portfolio and Stock
+    portfolio = db.relationship('Portfolio', backref='portfolio_stocks')
+    stock = db.relationship('Stock', backref='portfolio_stocks')
 
 # Stock Model
 class Stock(db.Model):
@@ -61,6 +65,11 @@ class Order(db.Model):
     price = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(10), nullable=False)  # 'pending', 'executed', 'cancelled'
 
+    # Define relationships to Users and Stock
+    user = db.relationship('Users', backref='orders')
+    stock = db.relationship('Stock', backref='orders')
+
+
 # Transaction Model
 class Transaction(db.Model):
     __tablename__ = 'transactions' 
@@ -72,6 +81,10 @@ class Transaction(db.Model):
     price = db.Column(db.Float, nullable=False)
     total = db.Column(db.Float, nullable=False)
 
+    # Define relationships to Users and Order
+    user = db.relationship('Users', backref='transactions')
+    order = db.relationship('Order', backref='transactions')
+
 # CashTransaction Model
 class CashTransaction(db.Model):
     __tablename__ = 'cash_transactions' 
@@ -80,3 +93,6 @@ class CashTransaction(db.Model):
     transaction_type = db.Column(db.String(10), nullable=False)  # 'deposit' or 'withdrawal'
     amount = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    # Define the relationship to Users
+    user = db.relationship('Users', backref='cash_transactions')

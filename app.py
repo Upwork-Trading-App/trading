@@ -39,7 +39,7 @@ def register():
             message = 'Please fill out the form!'
         else:
             hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-            new_user = Users(full_name=fullname, email=email, username=username, password_hash=hashed_password, role='customer')
+            new_user = Users(full_name=fullname, email=email, username=username, password_hash=hashed_password, role='trader')
             db.session.add(new_user)
             db.session.commit()
             message = 'You have successfully registered!'
@@ -70,6 +70,7 @@ def login():
                     session['userid'] = user.id
                     session['name'] = user.full_name
                     session['email'] = user.email
+                    session['role'] = user.role
                     message = 'Logged in successfully!'
                     return redirect(url_for('dashboard'))
 

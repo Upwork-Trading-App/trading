@@ -128,7 +128,7 @@
                         <div class="form-group">
                         <label for="role{{ user.id }}">Role</label>
                         <select class="form-control" id="role{{ user.id }}" name="role">
-                            <option value="customer" {% if user.role == 'customer' %}selected{% endif %}>Customer</option>
+                            <option value="trader" {% if user.role == 'trader' %}selected{% endif %}>Trader</option>
                             <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
                         </select>
                         </div>
