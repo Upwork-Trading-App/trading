@@ -51,8 +51,8 @@ class Stock(db.Model):
     company_name = db.Column(db.String(150), nullable=False)
     volume = db.Column(db.Integer, nullable=False)
     initial_price = db.Column(db.Float, nullable=False)
-    current_price = db.Column(db.Float, nullable=False)
-    market_cap = db.Column(db.Float, nullable=False)
+    current_price = db.Column(db.Float, nullable=True)
+    market_cap = db.Column(db.Float, nullable=True)
 
 # Order Model
 class Order(db.Model):
@@ -96,3 +96,12 @@ class CashTransaction(db.Model):
 
     # Define the relationship to Users
     user = db.relationship('Users', backref='cash_transactions')
+
+# MarketHours Model
+class MarketHours(db.Model):
+    __tablename__ = 'market_hours'
+    id = db.Column(db.Integer, primary_key=True)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    weekdays_only = db.Column(db.Boolean, default=True)
+    holiday_closure = db.Column(db.Boolean, default=True)

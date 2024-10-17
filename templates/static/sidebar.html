@@ -41,12 +41,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <!-- Add active class if the current route matches 'list_users' -->
-                    <a href="{{ url_for('list_users') }}" class="nav-link {% if request.endpoint == 'list_users' %}active{% endif %}">
-                        <i class="nav-icon fas fa-users"></i>
-                        <p>Users</p>
-                    </a>
+                    {% if session['loggedin'] and session['role'] == 'admin' %}
+                        <!-- Add active class if the current route matches 'list_users' -->
+                        <a href="{{ url_for('list_users') }}" class="nav-link {% if request.endpoint == 'list_users' %}active{% endif %}">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Users</p>
+                        </a>
+                    {% endif %}
                 </li>
+                
                 <li class="nav-item">
                     <!-- Add active class if the current route matches 'list_portfolios' -->
                     <a href="{{ url_for('list_portfolios') }}" class="nav-link {% if request.endpoint == 'list_portfolios' %}active{% endif %}">
@@ -55,12 +58,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <!-- Add active class if the current route matches 'list_stocks' -->
+                    <!-- Display only if the user is an admin -->
+                    {% if session['loggedin'] and session['role'] == 'admin' %}
                     <a href="{{ url_for('list_stocks') }}" class="nav-link {% if request.endpoint == 'list_stocks' %}active{% endif %}">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>Stocks</p>
                     </a>
-                </li>  
+                    {% endif %}
+                </li>                  
                 <li class="nav-item">
                     <!-- Add active class if the current route matches 'list_portfolio_stocks' -->
                     <a href="{{ url_for('list_portfolio_stocks') }}" class="nav-link {% if request.endpoint == 'list_portfolio_stocks' %}active{% endif %}">

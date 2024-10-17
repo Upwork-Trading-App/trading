@@ -90,66 +90,107 @@ def logout():
     return redirect(url_for('login'))
 
 
-### USERS
 @app.route('/users/create', methods=['GET', 'POST'])
 def create_user():
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    # Check if the logged-in user is an admin
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+
     if request.method == 'POST':
         full_name = request.form['full_name']
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
         role = request.form['role']
-        
+
         # Check if the username or email already exists
         user_exists = Users.query.filter((Users.username == username) | (Users.email == email)).first()
         if user_exists:
             return redirect(url_for('create_user'))
-        
+
         # Create a new user
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         new_user = Users(full_name=full_name, username=username, email=email, password_hash=hashed_password, role=role)
         db.session.add(new_user)
         db.session.commit()
-        
+
         return redirect(url_for('list_users'))
-    
+
     return render_template('users/create.html')
+
 
 @app.route('/users', methods=['GET'])
 def list_users():
-    if 'loggedin' in session:
-        users = Users.query.all()
-        return render_template('users/list.html', users=users)
-    return redirect(url_for('login'))
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    # Check if the logged-in user is an admin
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+
+    users = Users.query.all()
+    return render_template('users/list.html', users=users)
+
 
 @app.route('/users/view/<int:user_id>')
 def view_user(user_id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    # Check if the logged-in user is an admin
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+
     user = Users.query.get_or_404(user_id)
     return render_template('users/view.html', user=user)
 
+
 @app.route('/users/edit/<int:user_id>', methods=['GET', 'POST'])
 def edit_user(user_id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    # Check if the logged-in user is an admin
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+
     user = Users.query.get_or_404(user_id)
-    
+
     if request.method == 'POST':
         user.full_name = request.form['full_name']
         user.username = request.form['username']
         user.email = request.form['email']
         user.role = request.form['role']
-        
+
         new_password = request.form['password']
-        if new_password:  
+        if new_password:
             hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-            user.password_hash = hashed_password  
-        
+            user.password_hash = hashed_password
+
         db.session.commit()
-        
+
         return redirect(url_for('list_users'))
-    
+
     return render_template('users/edit.html', user=user)
+
 
 @app.route('/users/delete/<int:user_id>')
 def delete_user(user_id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    # Check if the logged-in user is an admin
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+
     user = Users.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
@@ -261,14 +302,28 @@ def delete_portfolio_stock(id):
 ### STOCK
 @app.route('/stock/create', methods=['GET', 'POST'])
 def create_stock():
+    # Check if the logged-in user is an admin
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+    
     if request.method == 'POST':
         ticker = request.form['ticker']
         company_name = request.form['company_name']
         volume = int(request.form['volume'])
         initial_price = float(request.form['initial_price'])
-        current_price = float(request.form['current_price'])
-        market_cap = float(request.form['market_cap'])
+        
+        # Set current price to initial price if not provided
+        current_price = request.form.get('current_price')
+        if not current_price:
+            current_price = initial_price
+        else:
+            current_price = float(current_price)
+        
+        # Automatically calculate market capitalization
+        market_cap = current_price * volume
 
+        # Create and save the new stock
         stock = Stock(ticker=ticker, company_name=company_name, volume=volume, initial_price=initial_price, current_price=current_price, market_cap=market_cap)
         db.session.add(stock)
         db.session.commit()
@@ -279,12 +334,21 @@ def create_stock():
 
 @app.route('/stocks')
 def list_stocks():
+    # Check if the logged-in user is an admin
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+    
     stocks = Stock.query.all()
     return render_template('stock/list.html', stocks=stocks)
 
 
 @app.route('/stock/edit/<int:id>', methods=['GET', 'POST'])
 def edit_stock(id):
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+    
     stock = Stock.query.get_or_404(id)
     
     if request.method == 'POST':
@@ -292,15 +356,21 @@ def edit_stock(id):
         stock.company_name = request.form['company_name']
         stock.volume = int(request.form['volume'])
         stock.current_price = float(request.form['current_price'])
-        stock.market_cap = float(request.form['market_cap'])
+        stock.market_cap = stock.current_price * stock.volume
+
         db.session.commit()
 
         return redirect(url_for('list_stocks'))
 
-    return render_template('stock/edit.html', stock=stock)
+    return redirect(url_for('list_stocks'))
+
 
 @app.route('/stock/delete/<int:id>')
 def delete_stock(id):
+    user = Users.query.get_or_404(session['userid'])
+    if user.role != 'admin':
+        return "You are not authorized to access this page.", 403
+    
     stock = Stock.query.get_or_404(id)
     db.session.delete(stock)
     db.session.commit()
@@ -311,18 +381,25 @@ def delete_stock(id):
 ### ORDER
 @app.route('/order/create', methods=['GET', 'POST'])
 def create_order():
-    users = Users.query.all() 
-    stocks = Stock.query.all() 
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+    
+    user = Users.query.get_or_404(session['userid'])
+
+    if user.role != 'trader':
+        return "You are not authorized to perform stock trades.", 403
+    
+    users = Users.query.all()
+    stocks = Stock.query.all()
 
     if request.method == 'POST':
-        user_id = request.form['user_id']
         stock_id = request.form['stock_id']
         order_type = request.form['order_type']
         quantity = int(request.form['quantity'])
         price = float(request.form['price'])
-        status = 'pending'  
+        status = 'pending'
 
-        order = Order(user_id=user_id, stock_id=stock_id, order_type=order_type, quantity=quantity, price=price, status=status)
+        order = Order(user_id=user.id, stock_id=stock_id, order_type=order_type, quantity=quantity, price=price, status=status)
         db.session.add(order)
         db.session.commit()
 
@@ -332,26 +409,55 @@ def create_order():
 
 @app.route('/orders')
 def list_orders():
-    orders = Order.query.all()
-    return render_template('order/list.html', orders=orders)
+    orders = Order.query.all()  
+    stocks = Stock.query.all()  
+    users = Users.query.all() 
+    return render_template('order/list.html', orders=orders, stocks=stocks, users=users)
 
 @app.route('/order/edit/<int:id>', methods=['GET', 'POST'])
 def edit_order(id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
     order = Order.query.get_or_404(id)
-    users = Users.query.all() 
-    stocks = Stock.query.all() 
-    
+
+    if order.status != 'pending':
+        return "You cannot edit an executed or cancelled order.", 403
+
+    stocks = Stock.query.all()
+    users = Users.query.all()
+
     if request.method == 'POST':
-        order.user_id = request.form['user_id']  
-        order.stock_id = request.form['stock_id']  
+        order.user_id = request.form['user_id'] 
+        order.stock_id = request.form['stock_id']
         order.quantity = int(request.form['quantity'])
         order.price = float(request.form['price'])
-        order.status = request.form['status']
+        order.status = 'pending'
         db.session.commit()
 
         return redirect(url_for('list_orders'))
 
-    return render_template('order/edit.html', order=order, users=users, stocks=stocks)
+    return redirect(url_for('list_orders'))
+
+@app.route('/order/cancel/<int:id>')
+def cancel_order(id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+    
+    user = Users.query.get_or_404(session['userid'])
+
+    if user.role != 'trader':
+        return "You are not authorized to cancel stock trades.", 403
+
+    order = Order.query.get_or_404(id)
+    
+    if order.status != 'pending':
+        return "Only pending orders can be cancelled.", 403
+
+    order.status = 'cancelled'
+    db.session.commit()
+
+    return redirect(url_for('list_orders'))
 
 @app.route('/order/delete/<int:id>')
 def delete_order(id):
@@ -472,5 +578,5 @@ def delete_cash_transaction(id):
 
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     app.run(debug=True)

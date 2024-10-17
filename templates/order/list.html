@@ -111,6 +111,30 @@
                                         </div>
                                         <form action="{{ url_for('edit_order', id=order.id) }}" method="POST">
                                             <div class="modal-body">
+                                                 <!-- User Dropdown -->
+                                                    <div class="form-group">
+                                                        <label for="user_id{{ order.id }}">User</label>
+                                                        <select class="form-control" id="user_id{{ order.id }}" name="user_id" required>
+                                                            {% for user in users %}
+                                                                <option value="{{ user.id }}" {% if user.id == order.user_id %}selected{% endif %}>
+                                                                    {{ user.full_name }}
+                                                                </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Stock Dropdown -->
+                                                    <div class="form-group">
+                                                        <label for="stock_id">Stock</label>
+                                                        <select class="form-control" id="stock_id" name="stock_id" required>
+                                                            {% for stock in stocks %}
+                                                                <option value="{{ stock.id }}" {% if stock.id == order.stock_id %}selected{% endif %}>
+                                                                    {{ stock.ticker }} - {{ stock.company_name }}
+                                                                </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+
                                                 <!-- Quantity -->
                                                 <div class="form-group">
                                                     <label for="quantity{{ order.id }}">Quantity</label>
