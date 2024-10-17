@@ -403,6 +403,19 @@ def create_order():
         db.session.add(order)
         db.session.commit()
 
+        # Create the transaction record
+        total = quantity * price  # Calculate total
+        transaction = Transaction(
+            user_id=user.id,
+            order_id=order.id,
+            transaction_type=order_type,
+            quantity=quantity,
+            price=price,
+            total=total
+        )
+        db.session.add(transaction)
+        db.session.commit()
+
         return redirect(url_for('list_orders'))
 
     return render_template('order/create.html', users=users, stocks=stocks)
@@ -493,9 +506,8 @@ def create_transaction():
 
 @app.route('/transactions')
 def list_transactions():
-    transactions = Transaction.query.all()
-    return render_template('transaction/list.html', transactions=transactions)
-
+    transactions = Transaction.query.all()  # Retrieve all transactions
+    return render_template('transaction/list.html', transactions=transactions)  # Render the list template
 
 @app.route('/transaction/edit/<int:id>', methods=['GET', 'POST'])
 def edit_transaction(id):
